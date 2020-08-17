@@ -9,14 +9,10 @@
 #include "text_excute.h"
 #include "Pipeline.h"
 
-extern unsigned x[], pc, locked[];
-class pipeline5 : public pipeline
-{
+class WB : public pipeline{
 public:
-    void execute()
-    {
-        switch (opcode)
-        {
+    void execute(){
+        switch (opcode){
             case 0b0110111: // LUI
                 x[rd] = imm;
                 break;
@@ -30,8 +26,7 @@ public:
                 rd ? x[rd] = rs1 : 0;
                 break;
             case 0b1100011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // BEQ
                         break;
                     case 0b001: // BNE
@@ -47,8 +42,7 @@ public:
                 }
                 break;
             case 0b0000011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // LB
                         x[rd] = int(char(imm));
                         break;
@@ -67,8 +61,7 @@ public:
                 }
                 break;
             case 0b0100011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // SB
                         break;
                     case 0b001: // SH
@@ -78,8 +71,7 @@ public:
                 }
                 break;
             case 0b0010011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ADDI
                         x[rd] = rs1;
                         break;
@@ -102,8 +94,7 @@ public:
                         x[rd] = rs1;
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRLI
                                 x[rd] = rs1;
                                 break;
@@ -115,8 +106,7 @@ public:
                 }
                 break;
             case 0b0110011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ...
                         switch (func7)
                         {
@@ -141,8 +131,7 @@ public:
                         x[rd] = rs1;
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRL
                                 x[rd] = rs1;
                                 break;
@@ -162,8 +151,7 @@ public:
         }
     }
 
-    void unlock_register()
-    {
+    void unlock_register(){
         switch (type)
         {
             case R:	case I:	case U:	case J:
@@ -174,8 +162,7 @@ public:
         }
     }
 
-    void run(pipeline *next_ppl)
-    {
+    void run(pipeline *next_ppl){
         if (!is_empty(next_ppl) || is_empty(this)) return;
         execute();
         unlock_register(); // hazard : unlock the rd register

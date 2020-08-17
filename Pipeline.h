@@ -5,12 +5,10 @@
 #include <cmath>
 #include <cstring>
 #include <cstdio>
-#include <map>
 #include "text_excute.h"
 
 enum TYPE { R, I, S, B, U, J };
-class pipeline
-{
+class pipeline{
 public:
 
     /* n-bit dynamic branch predictor */
@@ -18,7 +16,6 @@ public:
     const unsigned MASK = (1 << STEP) - 1;
     const unsigned LEN = 2 * 2; // dynamic 2, automaton ranges from 1 to LEN
 
-    /* buffer with meaningless name */
     unsigned ins, rs1, rs2, rd, imm, func3, func7, opcode;
     bool empty;
     TYPE type;
@@ -26,9 +23,7 @@ public:
     pipeline() { empty = true; }
     ~pipeline() {}
 
-    /* because the constant variables STEP and MASK, the default operator "=" is deleted */
-    pipeline &operator = (const pipeline &that)
-    {
+    pipeline &operator = (const pipeline &that){
         ins = that.ins;
         rs1 = that.rs1;
         rs2 = that.rs2;
@@ -42,21 +37,19 @@ public:
         return *this;
     }
 
-    bool is_empty(pipeline *ppl) {return ppl != nullptr ? ppl->empty : true; }
+    bool is_empty(pipeline *ppl) {
+        return ppl != nullptr ? ppl->empty : true;
+    }
 
-    /* assuming that next_ppl is empty */
-    void pass(pipeline *next_ppl)
-    {
-        if(next_ppl != nullptr)
-        {
+    void pass(pipeline *next_ppl){
+        if(next_ppl != nullptr){
             *next_ppl = *this;
             next_ppl->empty = false;
         }
         empty = true;
     }
 
-    void show_buffer()
-    {
+    void show_buffer(){
         printf("ins = %2X\trs1 = %2X\trs2 = %2X\trd = %2X\timm = %2X\tfunc3 = %2X\tfunc7 = %2X\topcode = %2X\tempty = %d\ttype = %d\n",
                ins, rs1, rs2, rd, imm, func3, func7, opcode, empty, type);
     }

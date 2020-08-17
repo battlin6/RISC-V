@@ -10,18 +10,12 @@
 #include "text_excute.h"
 #include "Pipeline.h"
 
-extern unsigned pc_lock;
-extern unsigned branch_history[], branch_vis_time[];
-extern unsigned branch_taken[][1 << 2][2], branch_taken2[][1 << 2];
-extern unsigned branch_tot_vis, branch_cor_vis;
-extern std::map<unsigned, unsigned> hash_table;
-class pipeline3 : public pipeline
-{
+extern unsigned tot_num,right_num;
+
+class EX : public pipeline{
 public:
-    void execute(pipeline *prev_ppl)
-    {
-        switch (opcode)
-        {
+    void execute(pipeline *prev_ppl){
+        switch (opcode){
             case 0b0110111: // LUI
                 break;
             case 0b0010111: // AUIPC
@@ -35,8 +29,7 @@ public:
                 break;
             case 0b1100011: // ...
                 // imm -= 4;
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // BEQ
                         rs1 = rs1 == rs2 ? 1 : 0;
                         break;
@@ -57,7 +50,7 @@ public:
                         break;
                 }
 
-                branch_tot_vis++;
+                tot_num++;
 
                 /*
                 if (branch_vis_time[rd] > STEP) // dynamic 1
@@ -72,20 +65,19 @@ public:
 
                 (branch_history[rd] <<= 1) |= rs1;
 
-                if (rs1 != imm) // incorrect prediction
-                {
+                if (rs1 != imm){ // incorrect prediction
+
                     prev_ppl->empty = true;
                     pc_lock++;
                 }
-                else // correct prediction
-                {
-                    branch_cor_vis++;
+                else{ // correct prediction
+
+                    right_num++;
                 }
                 break;
             case 0b0000011: // ...
                 imm += rs1;
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // LB
                         break;
                     case 0b001: // LH
@@ -100,8 +92,7 @@ public:
                 break;
             case 0b0100011: // ...
                 imm += rs1;
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // SB
                         break;
                     case 0b001: // SH
@@ -111,8 +102,7 @@ public:
                 }
                 break;
             case 0b0010011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ADDI
                         rs1 += imm;
                         break;
@@ -135,8 +125,7 @@ public:
                         rs1 <<= (imm & ((1 << 5) - 1));
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRLI
                                 rs1 >>= (imm & ((1 << 5) - 1));
                                 break;
@@ -148,11 +137,9 @@ public:
                 }
                 break;
             case 0b0110011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // ADD
                                 rs1 = rs1 + rs2;
                                 break;
@@ -174,8 +161,7 @@ public:
                         rs1 = rs1 ^ rs2;
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRL
                                 rs1 >>= rs2;
                                 break;
@@ -195,14 +181,12 @@ public:
         }
     }
 
-    void make_triple_cycle()
-    {
+    void make_triple_cycle(){
         if (opcode == 0b0000011 || opcode == 0b0100011) // L**, S**
             func7 = 3;
     }
 
-    void run(pipeline *next_ppl, pipeline *prev_ppl)
-    {
+    void run(pipeline *next_ppl, pipeline *prev_ppl){
         if (!is_empty(next_ppl) || is_empty(this)) return;
         execute(prev_ppl);
         make_triple_cycle();

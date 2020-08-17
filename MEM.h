@@ -10,23 +10,20 @@
 #include "Pipeline.h"
 using namespace std;
 
-
-extern unsigned pc, pc_lock;
-extern unsigned branch_address[][2];
-extern unsigned branch_tot_vis, branch_cor_vis;
-class pipeline4 : public pipeline
-{
+class MEM : public pipeline{
 public:
-    void execute()
-    {
-        if (ins == 0x0ff00513)
-        {
+    void execute(){
+        if (ins == 0x0ff00513){
+
+            /*print answer*/
             printf("%d\n", ((unsigned)x[10]) & 255u);
-            //printf("%lf%%\n", 100.0 * branch_cor_vis / branch_tot_vis);
+
+            /*print rate of the prediction*/
+            //printf("%lf%%\n", 100.0 * right_num / tot_num);
+
             exit(0);
         }
-        switch (opcode)
-        {
+        switch (opcode){
             case 0b0110111: // LUI
                 break;
             case 0b0010111: // AUIPC
@@ -41,8 +38,7 @@ public:
                 pc = imm;
                 break;
             case 0b1100011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // BEQ
                         break;
                     case 0b001: // BNE
@@ -56,50 +52,47 @@ public:
                     case 0b111: // BGEU
                         break;
                 }
-                if (rs1 != imm) // incorrect prediction
-                {
+                if (rs1 != imm){ // incorrect prediction
+
                     pc = branch_address[rd][rs1];
                     pc_lock--;
                 }
                 break;
             case 0b0000011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // LB
-                        imm = read_mem_pos(imm, 8 / 8);
+                        imm = read(imm, 8 / 8);
                         break;
                     case 0b001: // LH
-                        imm = read_mem_pos(imm, 16 / 8);
+                        imm = read(imm, 16 / 8);
                         break;
                     case 0b010: // LW
-                        imm = read_mem_pos(imm, 32 / 8);
+                        imm = read(imm, 32 / 8);
                         break;
                     case 0b100: // LBU
-                        imm = read_mem_pos(imm, 8 / 8);
+                        imm = read(imm, 8 / 8);
                         break;
                     case 0b101: // LHU
-                        imm = read_mem_pos(imm, 16 / 8);
+                        imm = read(imm, 16 / 8);
                         break;
                 }
                 break;
             case 0b0100011: // ...
 
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // SB
-                        write_mem_pos(imm, 8 / 8, rs2);
+                        write(imm, 8 / 8, rs2);
                         break;
                     case 0b001: // SH
-                        write_mem_pos(imm, 16 / 8, rs2);
+                        write(imm, 16 / 8, rs2);
                         break;
                     case 0b010: // SW
-                        write_mem_pos(imm, 32 / 8, rs2);
+                        write(imm, 32 / 8, rs2);
                         break;
                 }
                 break;
             case 0b0010011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ADDI
                         break;
                     case 0b010: // SLTI
@@ -115,8 +108,7 @@ public:
                     case 0b001: // SLLI
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRLI
                                 break;
                             case 0b0100000: // SRAI
@@ -126,11 +118,9 @@ public:
                 }
                 break;
             case 0b0110011: // ...
-                switch (func3)
-                {
+                switch (func3){
                     case 0b000: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // ADD
                                 break;
                             case 0b0100000: // SUB
@@ -146,8 +136,7 @@ public:
                     case 0b100: // XOR
                         break;
                     case 0b101: // ...
-                        switch (func7)
-                        {
+                        switch (func7){
                             case 0b0000000: // SRL
                                 break;
                             case 0b0100000: // SRA
@@ -162,21 +151,18 @@ public:
                 break;
         }
     }
-    void unlock_pc()
-    {
+    void unlock_pc(){
         if (opcode == 0b1101111 || opcode == 0b1100111) // JAL, JALR
             pc_lock--;
     }
 
-    bool do_triple_cycle()
-    {
+    bool do_triple_cycle(){
         if ((opcode == 0b0000011 || opcode == 0b0100011) && --func7) // L**, S**
             return false;
         return true;
     }
 
-    void run(pipeline *next_ppl)
-    {
+    void run(pipeline *next_ppl){
         if (!is_empty(next_ppl) || is_empty(this)) return;
         if (!do_triple_cycle()) return;
         execute();

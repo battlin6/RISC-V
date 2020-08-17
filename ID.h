@@ -10,19 +10,16 @@
 #include "Pipeline.h"
 
 extern unsigned x[], locked[], pc_lock, pc;
-extern unsigned branch_address[][2], branch_vis_time[], branch_taken[][1 << 2][2], branch_taken2[][1 << 2], branch_history[];
-extern unsigned timer;
-extern const unsigned _M;
+extern unsigned branch_address[][2], branch_vis_time[], branch_taken2[][1 << 2], branch_history[];
 
-class pipeline2 : public pipeline
-{
+extern const unsigned N;
+
+class ID : public pipeline{
 public:
-    void get_type()
-    {
+    void getType(){
         opcode = get(ins, 6, 0);
-        func3 = get(ins, 14, 12); // may be not available in some cases but never mind
-        switch (opcode)
-        {
+        func3 = get(ins, 14, 12);
+        switch (opcode){
             case 55: // 0110111
                 type = U;
                 break;
@@ -55,11 +52,8 @@ public:
         }
     }
 
-    /* opcode has been decoded */
-    void decode_all()
-    {
-        switch (type)
-        {
+    void getOther(){
+        switch (type){
             case R:
                 func7 = get(ins, 31, 25);
                 rs2 = get(ins, 24, 20);
@@ -94,35 +88,29 @@ public:
                 rd = get(ins, 11, 7);
                 break;
             default:
-                throw "error in decode";
-                break;
+                throw "error in getOther";
         }
     }
 
-    void sign_extend()
-    {
-        switch (type)
-        {
+    void sign_extend(){
+        switch (type){
             case R: // no imm
                 break;
             case I: case S: case B:
-                imm |= gen_con01(get(ins, 31, 31), 31, 12);
+                imm |= get01(get(ins, 31, 31), 31, 12);
                 break;
             case U: // nothing to do
                 break;
             case J:
-                imm |= gen_con01(get(ins, 31, 31), 31, 20);
+                imm |= get01(get(ins, 31, 31), 31, 20);
                 break;
             default:
                 throw "error in sign extend";
-                break;
         }
     }
 
-    bool register_fetch()
-    {
-        switch (type)
-        {
+    bool register_fetch(){
+        switch (type){
             case R: case S: case B:
                 if (locked[rs2] || locked[rs1]) return false;
                 rs2 = x[rs2];
@@ -136,15 +124,12 @@ public:
                 break;
             default:
                 throw "error in regiter fetch";
-                break;
         }
         return true;
     }
 
-    void lock_register()
-    {
-        switch (type)
-        {
+    void lock_register(){
+        switch (type){
             case R:	case I:	case U:	case J:
                 locked[rd]++;
                 break;
@@ -153,65 +138,18 @@ public:
         }
     }
 
-    void lock_pc()
-    {
+    void lock_pc(){
         if (opcode == 0b1101111 || opcode == 0b1100111) // JAL, JALR
             pc_lock++;
     }
 
-    /* static and useless */
-    void static_branch_predictor()
-    {
-        if (opcode != 0b1100011) return;
-
-        unsigned ins_address = (pc - 4) >> 2;
-        if (branch_vis_time[ins_address] == 0)
-        {
-            branch_address[ins_address][0] = pc;
-            branch_address[ins_address][1] = pc - 4 + imm;
-        }
-        branch_vis_time[ins_address]++;
-
-        pc = branch_address[ins_address][imm = 0]; // the choice
-        rd = ins_address; // save the address
-    }
-
-    /* two-level adaptive predictor (based on statistics) */
-    void dynamic_branch_predictor()
-    {
-        if (opcode != 0b1100011) return;
-
-        unsigned ins_address = ((pc - 4) >> 2) & _M;
-        if (branch_vis_time[ins_address] == 0) // init target address
-        {
-            branch_address[ins_address][0] = pc;
-            branch_address[ins_address][1] = pc - 4 + imm;
-        }
-
-        unsigned tmp0 = branch_taken[ins_address][branch_history[ins_address] & MASK][0];
-        unsigned tmp1 = branch_taken[ins_address][branch_history[ins_address] & MASK][1];
-        if (tmp0 || tmp1) // the history is not empty
-        {
-            unsigned choice = tmp0 > tmp1 ? 0 : 1;
-            pc = branch_address[ins_address][imm = choice]; // make choice
-        }
-        else
-        {
-            pc = branch_address[ins_address][imm = 0]; // make choice
-        }
-
-        rd = ins_address; // save the address into buffer
-        branch_vis_time[ins_address]++;
-    }
-
     /* two-level adaptive predictor (better, based on automaton) */
-    void dynamic_branch_predictor2()
-    {
+    void dynamic_branch_predictor2(){
         if (opcode != 0b1100011) return;
 
-        unsigned ins_address = ((pc - 4) >> 2) & _M;
-        if (branch_vis_time[ins_address] == 0) // init target address
-        {
+        unsigned ins_address = ((pc - 4) >> 2) & (N-1);
+        if (branch_vis_time[ins_address] == 0){ // init target address
+
             branch_address[ins_address][0] = pc;
             branch_address[ins_address][1] = pc - 4 + imm;
         }
@@ -219,30 +157,24 @@ public:
         unsigned &tmp = branch_taken2[ins_address][branch_history[ins_address] & MASK];
         if (tmp == 0) tmp = LEN >> 1 | 1; // init
         if (tmp <= LEN >> 1) // not taken
-        {
             pc = branch_address[ins_address][imm = 0]; // make choice
-        }
         else // taken
-        {
             pc = branch_address[ins_address][imm = 1]; // make choice
-        }
 
         rd = ins_address; // save the address into buffer
         branch_vis_time[ins_address]++;
     }
 
-    void run(pipeline *next_ppl)
-    {
+    void run(pipeline *next_ppl){
         if (!is_empty(next_ppl) || is_empty(this)) return;
-        get_type();
-        decode_all();
+        getType();
+        getOther();
         sign_extend();
         if (!register_fetch()) return;  // hazard : unable to fetch the locked registers
         lock_register(); // hazard : lock the rd register
         lock_pc(); // hazard : lock pc
 
-        //static_branch_predictor();
-        //dynamic_branch_predictor();
+
         dynamic_branch_predictor2();
 
         pass(next_ppl);

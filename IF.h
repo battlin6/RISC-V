@@ -11,21 +11,16 @@
 #include "Pipeline.h"
 
 extern unsigned pc_lock;
-class pipeline1 : public pipeline
-{
+class IF : public pipeline{
 public:
-    bool test_pc_permission()
-    {
-        if (pc_lock)
-            return false;
-        else
-            return true;
+    static bool check_pc_lock(){
+        return pc_lock == 0;
     }
-    void run(pipeline *next_ppl)
-    {
+
+    void run(pipeline *next_ppl){
         if (!is_empty(next_ppl)) return;
-        if (!test_pc_permission()) return; // hazard : unable to get pc as it is locked
-        ins = read_mem32();
+        if (!check_pc_lock()) return; // hazard : unable to get pc as it is locked
+        ins = read(4);
         pass(next_ppl);
     }
 };
