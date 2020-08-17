@@ -52,26 +52,13 @@ public:
 
                 tot_num++;
 
-                /*
-                if (branch_vis_time[rd] > STEP) // dynamic 1
-                    branch_taken[rd][branch_history[rd] & MASK][rs1]++; // dynamic 1
-                */
-
-                { // add braces to avoid CE
-                    unsigned &tmp = (branch_taken2[rd][branch_history[rd] & MASK] += rs1 ? 1 : -1); // dynamic 2
-                    if (tmp < 1) tmp = 1; // dynamic 2
-                    if (tmp > LEN) tmp = LEN; // dynamic 2
-                }
-
                 (branch_history[rd] <<= 1) |= rs1;
 
                 if (rs1 != imm){ // incorrect prediction
-
                     prev_ppl->empty = true;
                     pc_lock++;
                 }
                 else{ // correct prediction
-
                     right_num++;
                 }
                 break;

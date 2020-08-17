@@ -9,8 +9,8 @@
 #include "text_excute.h"
 #include "Pipeline.h"
 
-extern unsigned x[], locked[], pc_lock, pc;
-extern unsigned branch_address[][2], branch_vis_time[], branch_taken2[][1 << 2], branch_history[];
+extern unsigned x[], locked[];
+extern unsigned branch_address[][2], branch_vis_time[], branch_taken[][1 << 2], branch_history[];
 
 extern const unsigned N;
 
@@ -154,7 +154,7 @@ public:
             branch_address[ins_address][1] = pc - 4 + imm;
         }
 
-        unsigned &tmp = branch_taken2[ins_address][branch_history[ins_address] & MASK];
+        unsigned &tmp = branch_taken[ins_address][branch_history[ins_address] & MASK];
         if (tmp == 0) tmp = LEN >> 1 | 1; // init
         if (tmp <= LEN >> 1) // not taken
             pc = branch_address[ins_address][imm = 0]; // make choice

@@ -18,7 +18,7 @@ const unsigned N = 1 << 13;
 unsigned branch_address[N][2]; // the two addresses some branch may take, 0 for not taken, 1 for taken
 unsigned branch_vis_time[N]; // the time some branch is visited
 unsigned branch_history[N]; // the history of some branch, 0 for not taken, 1 for taken
-unsigned branch_taken2[N][1 << 2]; // the state of the automaton of some branch
+unsigned branch_taken[N][1 << 2]; // the state of the automaton of some branch
 
 unsigned tot_num,right_num;
 

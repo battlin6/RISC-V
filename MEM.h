@@ -53,7 +53,6 @@ public:
                         break;
                 }
                 if (rs1 != imm){ // incorrect prediction
-
                     pc = branch_address[rd][rs1];
                     pc_lock--;
                 }
@@ -78,7 +77,6 @@ public:
                 }
                 break;
             case 0b0100011: // ...
-
                 switch (func3){
                     case 0b000: // SB
                         write(imm, 8 / 8, rs2);
