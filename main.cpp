@@ -50,7 +50,7 @@ void Init(){
 }
 
 int main(){
-    freopen("in", "r", stdin);
+    //freopen("in", "r", stdin);
 
     Init();
     IF *ppl1 = new IF();
