@@ -1,50 +1,78 @@
 #ifndef RISC_V_TEXT_EXCUTE_H
 #define RISC_V_TEXT_EXCUTE_H
 
-extern int mem[];
+extern unsigned mem[];
+extern unsigned pc;
 
-//16 to 10
-int Hextrans(const char x) {
-    if (x <= '9' && x >= '0')
-        return x - '0';
-    else if (x <= 'z' && x >= 'a')
-        return x - 'a' + 10;
-    else
-        return x - 'A' + 10;
+unsigned hex2dec(char v){
+    if ('0' <= v && v <= '9') return v - '0';
+    else if ('a' <= v && v <= 'z') return v - 'a' + 10;
+    else return v - 'A' + 10;
 }
 
-//just get char
-char Getchar(){
-    char x=getchar();
-    while(x=='\n'||x==' '){
-        x=getchar();
-    }
-    return x;
+unsigned gen_con01(unsigned v, int high, int low){
+    if (!v) return 0;
+    else return ((1 << (high - low + 1)) - 1) << low;
 }
 
-//init the memory
-void Init() {
-    int pos = 0;
-    while (true) {
-        char c = Getchar();
-        if (c == EOF) {
+unsigned get(unsigned ins, int high, int low){
+    return ins << (31 - high) >> (32 - (high - low + 1));
+}
+
+
+char getc(){
+    char c = getchar();
+    while (c == ' ' || c == '\n')
+        c = getchar();
+    return c;
+}
+
+void init_mem(){
+    unsigned pos = 0;
+    while (true){
+        char c = getc();
+        if (c == EOF){
             break;
-        } else if (c == '@') {
-            int v = 0;
-            //get this 8-byte number
+        }
+        else if (c == '@'){
+            unsigned v = 0;
             for (int i = 1; i <= 8; i++)
-                v = v << 4 | Hextrans(Getchar());
+                v = v << 4 | hex2dec(getc());
             pos = v;
-        } else {
-            //get two number
-            int v = Hextrans(c) << 4 | Hextrans(Getchar());
+        }
+        else{
+            unsigned v = hex2dec(c) << 4 | hex2dec(getc());
             mem[pos++] = v;
         }
     }
 }
 
-void Mem_write(const int& pos,const int &len,int v) {
-    for (int i = 0; i < len; ++i) {
+unsigned read_mem(int len){
+    unsigned v = 0;
+    for (int i = len - 1; ~i; i--)
+        v = v << 8 | mem[pc + i];
+    pc += len;
+    return v;
+}
+
+unsigned read_mem32(){
+    return read_mem(4);
+}
+
+unsigned read_mem_pos(int pos, int len){
+    unsigned v = 0;
+    for (int i = len - 1; ~i; i--)
+        v = v << 8 | mem[pos + i];
+    return v;
+}
+
+unsigned read_mem32_pos(int pos){
+    return read_mem_pos(pos, 4);
+}
+
+void write_mem_pos(int pos, int len, int v){
+    for (int i = 0; i < len; i++)
+    {
         mem[pos + i] = v & ((1 << 8) - 1);
         v >>= 8;
     }

@@ -8,12 +8,10 @@
 #include <cstdio>
 #include <map>
 #include "text_excute.h"
-#include "memory_excute.h"
 #include "Pipeline.h"
 
-extern int pc_lock;
-
-class IF : public pipeline
+extern unsigned pc_lock;
+class pipeline1 : public pipeline
 {
 public:
     bool test_pc_permission()
@@ -26,12 +24,8 @@ public:
     void run(pipeline *next_ppl)
     {
         if (!is_empty(next_ppl)) return;
-
-        //todo
-        //hazards
-
-
-        ins = memory::read_mem32();
+        if (!test_pc_permission()) return; // hazard : unable to get pc as it is locked
+        ins = read_mem32();
         pass(next_ppl);
     }
 };

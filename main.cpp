@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <map>
 #include "text_excute.h"
-#include "memory_excute.h"
 #include "Pipeline.h"
 #include "IF.h"
 #include "ID.h"
@@ -12,33 +11,54 @@
 #include "MEM.h"
 #include "WB.h"
 
-int x[33],pc; //register
-int mem[131072+7]; //memory
+unsigned mem[0x20005]; // memory
+unsigned x[32], pc; // user-visible registers
 
-int lock[32],pc_lock; //hazards todo
+unsigned locked[32], pc_lock; // deal with hazard
 
-int main() {
-    freopen("","r",stdin);
+const unsigned _S = 1 << 13, _M = _S - 1; // 8191 is a prime so we can use bitwise 'and'
 
+unsigned branch_address[_S][2]; // the two addresses some branch may take, 0 for not taken, 1 for taken
+unsigned branch_vis_time[_S]; // the time some branch is visited
+unsigned branch_history[_S]; // the history of some branch, 0 for not taken, 1 for taken
+unsigned branch_taken2[_S][1 << 2]; // the state of the automaton of some branch
+/* not used */ unsigned branch_taken[_S][1 << 2][2]; // the times some branch is taken or not
 
-    //init
-    Init();
+unsigned branch_tot_vis, branch_cor_vis; // the number of times branches are visited (correctly)
 
-    IF *p1 = new IF;
-    ID *p2 = new ID;
-    EX *p3 = new EX;
-    MEM *p4= new MEM;
-    WB *p5= new WB;
+/* show the state of all pipelines */
+int show_id;
+void show_pipeline(int id, pipeline *ppl1, pipeline *ppl2, pipeline *ppl3, pipeline *ppl4, pipeline *ppl5)
+{
+    printf("%d : ", id);
+    printf("%d %d %d %d %d\n", !ppl1->empty, !ppl2->empty, !ppl3->empty, !ppl4->empty, !ppl5->empty);
+}
 
+int main()
+{
+    freopen("in", "r", stdin);
+    //freopen("sample/superloop.data", "r", stdin);
 
-    //excute
+    init_mem();
+    pipeline1 *ppl1 = new pipeline1();
+    pipeline2 *ppl2 = new pipeline2();
+    pipeline3 *ppl3 = new pipeline3();
+    pipeline4 *ppl4 = new pipeline4();
+    pipeline5 *ppl5 = new pipeline5();
+    while (true)
+    {
+        ppl5->run(nullptr);
+        //show_pipeline(++show_id, ppl1, ppl2, ppl3, ppl4, ppl5);
+        ppl4->run(ppl5);
+        //show_pipeline(++show_id, ppl1, ppl2, ppl3, ppl4, ppl5);
+        ppl3->run(ppl4, ppl2);
+        //show_pipeline(++show_id, ppl1, ppl2, ppl3, ppl4, ppl5);
+        ppl2->run(ppl3);
+        //show_pipeline(++show_id, ppl1, ppl2, ppl3, ppl4, ppl5);
+        ppl1->run(ppl2);
+        //show_pipeline(++show_id, ppl1, ppl2, ppl3, ppl4, ppl5);
 
-    while(true){
-        p5->run(nullptr);
-        p4->run(p5);
-        p3->run(p4,p2);
-        p2->run(p3);
-        p1->run(p2);
+        // if (!ppl3->empty)ppl3->show_buffer();
+
     }
-
 }

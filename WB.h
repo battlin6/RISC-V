@@ -7,12 +7,11 @@
 #include <cstdio>
 #include <map>
 #include "text_excute.h"
-#include "memory_excute.h"
 #include "Pipeline.h"
 
-extern int x[], pc, locked[];
-
-class WB : public pipeline{
+extern unsigned x[], pc, locked[];
+class pipeline5 : public pipeline
+{
 public:
     void execute()
     {
@@ -179,15 +178,10 @@ public:
     {
         if (!is_empty(next_ppl) || is_empty(this)) return;
         execute();
-
-        //todo
-        //hazards
-
-
+        unlock_register(); // hazard : unlock the rd register
         pass(next_ppl);
     }
 };
-
 
 
 #endif //RISC_V_WB_H

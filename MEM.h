@@ -7,13 +7,15 @@
 #include <cstdio>
 #include <map>
 #include "text_excute.h"
-#include "memory_excute.h"
 #include "Pipeline.h"
+using namespace std;
 
-extern int pc, pc_lock;
-extern int x[];
 
-class MEM : public pipeline{
+extern unsigned pc, pc_lock;
+extern unsigned branch_address[][2];
+extern unsigned branch_tot_vis, branch_cor_vis;
+class pipeline4 : public pipeline
+{
 public:
     void execute()
     {
@@ -56,27 +58,27 @@ public:
                 }
                 if (rs1 != imm) // incorrect prediction
                 {
-                    //pc = branch_address[rd][rs1];
-                    //pc_lock--;
+                    pc = branch_address[rd][rs1];
+                    pc_lock--;
                 }
                 break;
             case 0b0000011: // ...
                 switch (func3)
                 {
                     case 0b000: // LB
-                        imm = memory::read_mem_pos(imm, 8 / 8);
+                        imm = read_mem_pos(imm, 8 / 8);
                         break;
                     case 0b001: // LH
-                        imm = memory::read_mem_pos(imm, 16 / 8);
+                        imm = read_mem_pos(imm, 16 / 8);
                         break;
                     case 0b010: // LW
-                        imm = memory::read_mem_pos(imm, 32 / 8);
+                        imm = read_mem_pos(imm, 32 / 8);
                         break;
                     case 0b100: // LBU
-                        imm = memory::read_mem_pos(imm, 8 / 8);
+                        imm = read_mem_pos(imm, 8 / 8);
                         break;
                     case 0b101: // LHU
-                        imm = memory::read_mem_pos(imm, 16 / 8);
+                        imm = read_mem_pos(imm, 16 / 8);
                         break;
                 }
                 break;
@@ -85,13 +87,13 @@ public:
                 switch (func3)
                 {
                     case 0b000: // SB
-                        memory::write_mem_pos(imm, 8 / 8, rs2);
+                        write_mem_pos(imm, 8 / 8, rs2);
                         break;
                     case 0b001: // SH
-                        memory::write_mem_pos(imm, 16 / 8, rs2);
+                        write_mem_pos(imm, 16 / 8, rs2);
                         break;
                     case 0b010: // SW
-                        memory::write_mem_pos(imm, 32 / 8, rs2);
+                        write_mem_pos(imm, 32 / 8, rs2);
                         break;
                 }
                 break;
@@ -178,13 +180,9 @@ public:
         if (!is_empty(next_ppl) || is_empty(this)) return;
         if (!do_triple_cycle()) return;
         execute();
-
-        //todo
-        //hazards
-
+        unlock_pc(); // hazard : unlock pc
         pass(next_ppl);
     }
 };
-
 
 #endif //RISC_V_MEM_H
