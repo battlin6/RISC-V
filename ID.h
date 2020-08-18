@@ -173,8 +173,6 @@ public:
         if (!register_fetch()) return;  // hazard : unable to fetch the locked registers
         lock_register(); // hazard : lock the rd register
         lock_pc(); // hazard : lock pc
-
-
         dynamic_branch_predictor2();
 
         pass(next_ppl);

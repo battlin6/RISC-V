@@ -21,7 +21,7 @@ unsigned get(unsigned ins, int high, int low){
 
 char getc(){
     char c = getchar();
-    while (c == ' ' || c == '\n')
+    while (c == ' ' || c == '\n'||c=='\r')
         c = getchar();
     return c;
 }
