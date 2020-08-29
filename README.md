@@ -1,6 +1,6 @@
 # RISC-V
 
-- *A solution to RISC-V with C++**
+- **A solution to RISC-V with C++**
 
 + **Just simulate it**
 
